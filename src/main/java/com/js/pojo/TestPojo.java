@@ -8,5 +8,5 @@ import java.util.Map;
 public class TestPojo {
     private String name;
 
-    private Map<String,String> map;
+    private Map<String, String> map;
 }
