@@ -29,13 +29,13 @@ public abstract class ExcelListener<T> extends AnalysisEventListener<T> {
         //数据存储到list，供批量处理，或后续自己业务逻辑处理。
         this.datas.add(data);
         log.info("数据域范围内{}", this.datas);
-        //根据自己业务做处理
-        doSomething(datas);
     }
 
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
+        //根据自己业务做处理
+        doSomething(datas);
         //解析结束销毁不用的资源
         datas.clear();
     }
