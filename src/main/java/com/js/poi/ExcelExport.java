@@ -19,6 +19,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+@SuppressWarnings("ALL")
 public class ExcelExport {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExcelExport.class);
 

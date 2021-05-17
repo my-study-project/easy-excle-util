@@ -17,6 +17,7 @@ import java.net.URLEncoder;
 import java.util.List;
 import java.util.Set;
 
+@SuppressWarnings("ALL")
 public class EasyExcleUtil {
 
     private static EasyExcleUtil instance;
@@ -48,6 +49,12 @@ public class EasyExcleUtil {
 
     private static final String XLSX = ".xlsx";
 
+    private static final String CONTENT_TYPE = "application/vnd.ms-excel";
+
+    private static final String UTF8 = "utf8";
+
+    private static final String HEAD_CONTENT = "Content-Disposition";
+
     /**
      * @return
      * @Description: 导出文件 适合简单的list类型
@@ -62,9 +69,9 @@ public class EasyExcleUtil {
         } else {
             filenames = new String(filenames.getBytes(UTF_8), ISO_8859_1);
         }
-        response.setContentType("application/vnd.ms-exce");
-        response.setCharacterEncoding("utf-8");
-        response.addHeader("Content-Disposition", "filename=" + filenames + XLSX);
+        response.setContentType(CONTENT_TYPE);
+        response.setCharacterEncoding(UTF_8);
+        response.addHeader(HEAD_CONTENT, "filename=" + filenames + XLSX);
         EasyExcel.write(response.getOutputStream(), clazz).sheet("sheet").doWrite(list);
     }
 
@@ -135,7 +142,7 @@ public class EasyExcleUtil {
                 .sheet(sheetName)
                 .registerWriteHandler(horizontalCellStyleStrategy)
                 //最大长度自适应 目前没有对应算法优化 建议注释不用 会出bug
-                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+//                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
                 .doWrite(data);
 
     }
@@ -302,10 +309,10 @@ public class EasyExcleUtil {
     private static OutputStream getOutputStream(String fileName,
                                                 HttpServletResponse response) throws Exception {
         try {
-            fileName = URLEncoder.encode(fileName, "UTF-8");
-            response.setContentType("application/vnd.ms-excel");
-            response.setCharacterEncoding("utf8");
-            response.setHeader("Content-Disposition", "attachment; filename=" + fileName + ".xlsx");
+            fileName = URLEncoder.encode(fileName, UTF_8);
+            response.setContentType(CONTENT_TYPE);
+            response.setCharacterEncoding(UTF8);
+            response.setHeader(HEAD_CONTENT, "attachment; filename=" + fileName + XLSX);
             response.setHeader("Pragma", "public");
             response.setHeader("Cache-Control", "no-store");
             response.addHeader("Cache-Control", "max-age=0");

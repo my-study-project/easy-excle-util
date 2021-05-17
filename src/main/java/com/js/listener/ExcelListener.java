@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * EasyExcel 导入监听
  */
-@SuppressWarnings("AlibabaAbstractClassShouldStartWithAbstractNaming")
+@SuppressWarnings("ALL")
 @Slf4j
 public abstract class ExcelListener<T> extends AnalysisEventListener<T> {
 

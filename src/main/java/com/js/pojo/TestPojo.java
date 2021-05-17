@@ -4,6 +4,7 @@ import lombok.Data;
 
 import java.util.Map;
 
+@SuppressWarnings("ALL")
 @Data
 public class TestPojo {
     private String name;
