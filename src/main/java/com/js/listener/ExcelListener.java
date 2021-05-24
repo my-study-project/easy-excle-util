@@ -21,6 +21,8 @@ public abstract class ExcelListener<T> extends AnalysisEventListener<T> {
      * 表头集合
      */
     private List<Map<Integer, String>> headMapList = new ArrayList<>();
+
+    private Object needService;
     /**
      * 可以通过实例获取该值
      */
@@ -42,11 +44,16 @@ public abstract class ExcelListener<T> extends AnalysisEventListener<T> {
         this.headMapList = headMapList;
     }
 
+
     public ExcelListener() {
 
     }
 
-    public ExcelListener(List<Map<Integer, String>> headMapList) {
+    public ExcelListener(Object needService) {
+        this.needService = needService;
+    }
+
+    public ExcelListener(List<Map<Integer, String>> headMapList, Object needService) {
         this.headMapList = headMapList;
     }
 
@@ -71,7 +78,7 @@ public abstract class ExcelListener<T> extends AnalysisEventListener<T> {
         // 达到BATCH_COUNT了，需要去存储一次数据库，防止数据几万条数据在内存，容易OOM
         if (datas.size() >= BATCH_COUNT) {
             //根据自己业务做处理
-            doSomething(datas);
+            doSomething(datas, needService);
             // 存储完成清理 list
             datas.clear();
         }
@@ -92,5 +99,5 @@ public abstract class ExcelListener<T> extends AnalysisEventListener<T> {
      * @Author: 渡劫 dujie
      * @Date: 5/14/21 9:26 PM
      */
-    public abstract void doSomething(List<T> object);
+    public abstract void doSomething(List<T> object, Object needService);
 }
