@@ -23,31 +23,34 @@ public abstract class ExcelListener<T> extends AnalysisEventListener<T> {
     private List<Map<Integer, String>> headMapList = new ArrayList<>();
 
     private Object needService;
+
+    public Object getNeedService() {
+        return needService;
+    }
+
+    public void setNeedService(Object needService) {
+        this.needService = needService;
+    }
+
     /**
-     * 可以通过实例获取该值
+     * 解析的数据
      */
     private List<T> datas = new ArrayList<>();
-
-    public List<T> getDatas() {
-        return this.datas;
-    }
-
-    public void setDatas(List<T> datas) {
-        this.datas = datas;
-    }
 
     public List<Map<Integer, String>> getHeadMapList() {
         return headMapList;
     }
 
+    /**
+     * 自定义头可以手动set进来，也可以构造方法直接创建
+     */
+    public ExcelListener() {
+
+    }
     public void setHeadMapList(List<Map<Integer, String>> headMapList) {
         this.headMapList = headMapList;
     }
 
-
-    public ExcelListener() {
-
-    }
 
     public ExcelListener(Object needService) {
         this.needService = needService;
@@ -90,6 +93,7 @@ public abstract class ExcelListener<T> extends AnalysisEventListener<T> {
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
         //解析结束销毁不用的资源
         datas.clear();
+        // 如果有后续处理可以再加一个方法让子类继承并执行就可以了
     }
 
     /**
