@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * EasyExcel 导入监听
+ * EasyExcel 导入监听,两个范型，第一个为解析的结果类
  */
 @SuppressWarnings("ALL")
 @Slf4j
@@ -22,41 +22,19 @@ public abstract class ExcelListener<T> extends AnalysisEventListener<T> {
      */
     private List<Map<Integer, String>> headMapList = new ArrayList<>();
 
-    private Object needService;
-
-    public Object getNeedService() {
-        return needService;
-    }
-
-    public void setNeedService(Object needService) {
-        this.needService = needService;
-    }
-
     /**
      * 解析的数据
      */
     private List<T> datas = new ArrayList<>();
 
-    public List<Map<Integer, String>> getHeadMapList() {
-        return headMapList;
-    }
-
     /**
-     * 自定义头可以手动set进来，也可以构造方法直接创建
+     * 自定义头可以构造方法直接创建
      */
     public ExcelListener() {
 
     }
-    public void setHeadMapList(List<Map<Integer, String>> headMapList) {
-        this.headMapList = headMapList;
-    }
 
-
-    public ExcelListener(Object needService) {
-        this.needService = needService;
-    }
-
-    public ExcelListener(List<Map<Integer, String>> headMapList, Object needService) {
+    public ExcelListener(List<Map<Integer, String>> headMapList) {
         this.headMapList = headMapList;
     }
 
@@ -81,7 +59,7 @@ public abstract class ExcelListener<T> extends AnalysisEventListener<T> {
         // 达到BATCH_COUNT了，需要去存储一次数据库，防止数据几万条数据在内存，容易OOM
         if (datas.size() >= BATCH_COUNT) {
             //根据自己业务做处理
-            doSomething(datas, needService);
+            doSomething(datas);
             // 存储完成清理 list
             datas.clear();
         }
@@ -103,5 +81,5 @@ public abstract class ExcelListener<T> extends AnalysisEventListener<T> {
      * @Author: 渡劫 dujie
      * @Date: 5/14/21 9:26 PM
      */
-    public abstract void doSomething(List<T> object, Object needService);
+    public abstract void doSomething(List<T> object);
 }
