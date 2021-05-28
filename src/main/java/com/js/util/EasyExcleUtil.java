@@ -6,13 +6,17 @@ import com.alibaba.excel.support.ExcelTypeEnum;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.style.WriteCellStyle;
 import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
-import com.alibaba.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
+import com.js.listener.AllExcelListener;
 import com.js.listener.ExcelListener;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.util.List;
 import java.util.Set;
@@ -77,12 +81,26 @@ public class EasyExcleUtil {
 
     /**
      * @return
-     * @Description: 导入文件解析
+     * @Description: 导入文件解析 默认分组处理 incoke方法调用的 doSomething方法
      * @Param [multipartFile, clazz, excelListener]
      * @Author: 渡劫 dujie
      * @Date: 2021/5/14 1:50 PM
      */
     public static <T extends ExcelListener> void importExcle(File multipartFile, Class clazz, T listener) throws Exception {
+        InputStream inputStream = new FileInputStream(multipartFile);
+        //传入参数
+        EasyExcel.read(inputStream, clazz, listener).sheet().doRead();
+    }
+
+
+    /**
+     * @return
+     * @Description: 导入文件解析 默认不分组处理，使用者统一实现 doSomething()方法可以自己去重和分组 在after方法进行的调用
+     * @Param [multipartFile, clazz, excelListener]
+     * @Author: 渡劫 dujie
+     * @Date: 2021/5/14 1:50 PM
+     */
+    public static <T extends AllExcelListener> void importExcleNoSplit(File multipartFile, Class clazz, T listener) throws Exception {
         InputStream inputStream = new FileInputStream(multipartFile);
         //传入参数
         EasyExcel.read(inputStream, clazz, listener).sheet().doRead();
