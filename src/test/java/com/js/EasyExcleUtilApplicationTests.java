@@ -1,7 +1,6 @@
 package com.js;
 
 import com.js.pojo.TestPojo;
-import com.js.util.EasyExcleUtil;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
