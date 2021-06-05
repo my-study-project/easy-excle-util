@@ -1,14 +1,28 @@
-package com.js.util;
+package com.js.easyexcel.util;
 
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelReader;
 import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.event.AnalysisEventListener;
+import com.alibaba.excel.event.SyncReadListener;
+import com.alibaba.excel.read.builder.ExcelReaderSheetBuilder;
+import com.alibaba.excel.read.metadata.ReadSheet;
 import com.alibaba.excel.support.ExcelTypeEnum;
+import com.alibaba.excel.write.builder.ExcelWriterSheetBuilder;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.style.WriteCellStyle;
 import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
-import com.js.listener.AllExcelListener;
-import com.js.listener.ExcelListener;
+import com.alibaba.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
+import com.js.easyexcel.domain.ExcelParams;
+import com.js.easyexcel.domain.ExcelParamsMulti;
+import com.js.easyexcel.domain.FreezePane;
+import com.js.easyexcel.handle.SheetFreezeWriteHandler;
+import com.js.easyexcel.listener.AllExcelListener;
+import com.js.easyexcel.listener.ExcelListener;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -17,12 +31,17 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 @SuppressWarnings("ALL")
 public class EasyExcleUtil {
+
+    private static final Logger logger = LoggerFactory.getLogger(EasyExcleUtil.class);
+
 
     private static EasyExcleUtil instance;
 
@@ -52,6 +71,8 @@ public class EasyExcleUtil {
     private static final String ISO_8859_1 = "ISO-8859-1";
 
     private static final String XLSX = ".xlsx";
+
+    private static final String XLS = ".xls";
 
     private static final String CONTENT_TYPE = "application/vnd.ms-excel";
 
@@ -159,8 +180,6 @@ public class EasyExcleUtil {
                 .excelType(ExcelTypeEnum.XLSX)
                 .sheet(sheetName)
                 .registerWriteHandler(horizontalCellStyleStrategy)
-                //最大长度自适应 目前没有对应算法优化 建议注释不用 会出bug
-//                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
                 .doWrite(data);
 
     }
@@ -191,8 +210,6 @@ public class EasyExcleUtil {
                 .excelType(ExcelTypeEnum.XLSX)
                 .sheet(sheetName)
                 .registerWriteHandler(horizontalCellStyleStrategy)
-                //最大长度自适应 目前没有对应算法优化 建议注释不用 会出bug
-//                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
                 .doWrite(data);
 
     }
@@ -340,5 +357,281 @@ public class EasyExcleUtil {
         }
     }
 
+    /**
+     * Excel写出
+     *
+     * @param params
+     */
+    public static <T> void writeExcel(ExcelParams<T> params) {
 
+        ExcelWriterSheetBuilder writerSheetBuilder = null;
+        ExcelWriter excelWriter = null;
+        try {
+            if (params.getFileDest() == null) {
+                logger.error("Excel写出失败，fileDest为空！");
+                return;
+            }
+            excelWriter = EasyExcel.write(params.getFileDest(), params.getDataClass()).build();
+            FreezePane fp = params.getFreezePane();
+            writerSheetBuilder = EasyExcel.writerSheet(params.getSheetName());
+            if (fp != null) {
+                writerSheetBuilder.registerWriteHandler(new SheetFreezeWriteHandler(fp));
+            }
+            WriteSheet writeSheet = writerSheetBuilder.build();
+            excelWriter.write(params.getDataList(), writeSheet);
+        } finally {
+            // 千万别忘记finish 会帮忙关闭流
+            if (excelWriter != null) {
+                excelWriter.finish();
+            }
+        }
+    }
+
+    /**
+     * Excel写出到response
+     *
+     * @param params
+     */
+    public static <T> void writeExcel(ExcelParams<T> params, HttpServletResponse response) {
+
+        response.setContentType(CONTENT_TYPE);
+        response.setCharacterEncoding(UTF_8);
+        // 如果fileName为空，则使用当前时间戳为fileName
+        String fileName = StringUtils.defaultIfBlank(params.getFileName(), String.valueOf(System.currentTimeMillis()));
+        try {
+            fileName = URLEncoder.encode(fileName, UTF_8).replaceAll("\\+", "%20");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        response.setHeader(HEAD_CONTENT, "attachment;filename*=utf-8''" + fileName + XLSX);
+        ExcelWriterSheetBuilder writerSheetBuilder = null;
+        ExcelWriter excelWriter = null;
+        try {
+            excelWriter = EasyExcel.write(response.getOutputStream(), params.getDataClass()).build();
+            FreezePane fp = params.getFreezePane();
+            writerSheetBuilder = EasyExcel.writerSheet(params.getSheetName());
+            if (fp != null) {
+                writerSheetBuilder.registerWriteHandler(new SheetFreezeWriteHandler(fp));
+            }
+            writerSheetBuilder.registerWriteHandler(new LongestMatchColumnWidthStyleStrategy());
+            WriteSheet writeSheet = writerSheetBuilder.build();
+            excelWriter.write(params.getDataList(), writeSheet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            // 千万别忘记finish 会帮忙关闭流
+            if (excelWriter != null) {
+                excelWriter.finish();
+            }
+        }
+    }
+
+    /**
+     * Execl异步读取
+     *
+     * @param params
+     * @return
+     */
+    public static <T> void readExcel(ExcelParams<T> params) {
+        ExcelReader excelReader = null;
+        ReadSheet readSheet1 = null;
+        try {
+            if (params.getFileSrc() == null) {
+                logger.error("Excel读取失败，fileSrc为空！");
+                return;
+            }
+            excelReader = EasyExcel.read(params.getFileSrc()).autoTrim(true).build();
+            // 注册监听器
+            if (params.getListener() != null) {
+                readSheet1 = EasyExcel.readSheet(0).head(params.getDataClass()).registerReadListener(params.getListener()).build();
+            } else {
+                readSheet1 = EasyExcel.readSheet(0).head(params.getDataClass()).build();
+            }
+            excelReader.read(readSheet1);
+        } finally {
+            if (excelReader != null) {
+                // 这里千万别忘记关闭，读的时候会创建临时文件，到时磁盘会崩的
+                excelReader.finish();
+            }
+        }
+    }
+
+    /**
+     * Execl同步读取
+     *
+     * @param params
+     * @return
+     */
+    public static <T> List<T> readExcelSync(ExcelParams<T> params) {
+        ExcelReader excelReader = null;
+        ReadSheet readSheet = null;
+        try {
+            if (params.getFileSrc() == null) {
+                logger.error("Excel读取失败，fileSrc为空！");
+                return new ArrayList<T>();
+            }
+            excelReader = EasyExcel.read(params.getFileSrc()).autoTrim(true).build();
+            // 注册监听器
+            SyncReadListener syncReadListener = new SyncReadListener();
+            if (params.getListener() != null) {
+                readSheet = EasyExcel.readSheet(0).head(params.getDataClass())
+                        .registerReadListener(syncReadListener).registerReadListener(params.getListener()).build();
+            } else {
+                readSheet = EasyExcel.readSheet(0).head(params.getDataClass()).registerReadListener(syncReadListener).build();
+            }
+            excelReader.read(readSheet);
+            return (List<T>) syncReadListener.getList();
+
+        } finally {
+            if (excelReader != null) {
+                // 这里千万别忘记关闭，读的时候会创建临时文件，到时磁盘会崩的
+                excelReader.finish();
+            }
+        }
+    }
+
+
+    /**
+     * Excel多sheet导出
+     */
+    public static void writeExcelMulti(ExcelParamsMulti paramsMulti) {
+
+        ExcelWriter excelWriter = null;
+        try {
+            if (paramsMulti.getFileDest() == null) {
+                logger.error("Excel写出失败，fileDest为空！");
+                return;
+            }
+
+            Class[] dataClass = paramsMulti.getDataClassArray();
+            String[] sheetNames = paramsMulti.getSheetName();
+            FreezePane[] fp = paramsMulti.getFreezePane();
+            List[] dataListArray = paramsMulti.getDataListArray();
+
+            excelWriter = EasyExcel.write(paramsMulti.getFileDest()).build();
+
+            for (int i = 0; i < sheetNames.length; i++) {
+
+                ExcelWriterSheetBuilder writerSheetBuilder = EasyExcel.writerSheet(sheetNames[i]).head(dataClass[i]);
+                if (fp != null && fp[i] != null) {
+                    writerSheetBuilder.registerWriteHandler(new SheetFreezeWriteHandler(fp[i]));
+                }
+
+                WriteSheet writeSheet = writerSheetBuilder.build();
+                excelWriter.write(dataListArray[i], writeSheet);
+            }
+
+        } finally {
+            // 千万别忘记finish 会帮忙关闭流
+            if (excelWriter != null) {
+                excelWriter.finish();
+            }
+        }
+    }
+
+    /**
+     * Execl多sheet异步读取
+     *
+     * @return
+     */
+    public static void readExcelMulti(ExcelParamsMulti paramsMulti) {
+
+        List<ReadSheet> sheetList = new ArrayList<>();
+        ExcelReader excelReader = null;
+        try {
+            if (paramsMulti.getFileSrc() == null) {
+                logger.error("Excel读取失败，fileSrc为空！");
+                return;
+            }
+
+            Class[] dataClass = paramsMulti.getDataClassArray();
+            AnalysisEventListener[] listener = paramsMulti.getListenerArray();
+
+            excelReader = EasyExcel.read(paramsMulti.getFileSrc()).autoTrim(true).build();
+
+            for (int i = 0; i < dataClass.length; i++) {
+                ExcelReaderSheetBuilder readerSheetBuilder = EasyExcel.readSheet(i).head(dataClass[i]);
+                // 注册监听器
+                if (listener != null && listener[i] != null) {
+                    readerSheetBuilder.registerReadListener(listener[i]);
+                }
+
+                ReadSheet readSheet = readerSheetBuilder.build();
+                sheetList.add(readSheet);
+            }
+
+            excelReader.read(sheetList);
+
+        } finally {
+            if (excelReader != null) {
+                // 这里千万别忘记关闭，读的时候会创建临时文件，到时磁盘会崩的
+                excelReader.finish();
+            }
+        }
+    }
+
+    /**
+     * Execl多sheet同步读取
+     *
+     * @return
+     */
+    public static List[] readExcelMultiSync(ExcelParamsMulti paramsMulti) {
+        List[] dataListArray = null;
+        List<ReadSheet> sheetList = new ArrayList<>();
+        ExcelReader excelReader = null;
+        try {
+            if (paramsMulti.getFileSrc() == null) {
+                logger.error("Excel读取失败，fileSrc为空！");
+                return new ArrayList[0];
+            }
+            Class[] dataClass = paramsMulti.getDataClassArray();
+            AnalysisEventListener[] listener = paramsMulti.getListenerArray();
+            excelReader = EasyExcel.read(paramsMulti.getFileSrc()).autoTrim(true).build();
+            dataListArray = new ArrayList[dataClass.length];
+            SyncReadListener[] listenerArray = new SyncReadListener[dataClass.length];
+            for (int i = 0; i < dataClass.length; i++) {
+                ExcelReaderSheetBuilder readerSheetBuilder = EasyExcel.readSheet(i).head(dataClass[i]);
+
+                // 注册监听器
+                if (listener != null && listener[i] != null) {
+                    readerSheetBuilder.registerReadListener(listener[i]);
+                }
+                SyncReadListener syncReadListener = new SyncReadListener();
+                readerSheetBuilder.registerReadListener(syncReadListener);
+
+                ReadSheet readSheet = readerSheetBuilder.build();
+                sheetList.add(readSheet);
+                listenerArray[i] = syncReadListener;
+            }
+
+            excelReader.read(sheetList);
+
+            for (int i = 0; i < listenerArray.length; i++) {
+                dataListArray[i] = listenerArray[i].getList();
+            }
+
+            return dataListArray;
+
+        } finally {
+            if (excelReader != null) {
+                // 这里千万别忘记关闭，读的时候会创建临时文件，到时磁盘会崩的
+                excelReader.finish();
+            }
+        }
+    }
+
+
+    public static boolean isExcel(File file) {
+        String fileName = file.getName();
+        if (file.isFile()) {
+            int idx = fileName.lastIndexOf(".");
+            if (idx > 0) {
+                String ext = fileName.substring(fileName.lastIndexOf("."), fileName.length());
+                if (XLS.equals(ext) || XLSX.equals(ext)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }
