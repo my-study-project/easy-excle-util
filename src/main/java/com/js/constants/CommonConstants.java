@@ -26,4 +26,12 @@ public class CommonConstants {
 
     public static final String HEAD_CONTENT = "Content-Disposition";
 
+    public static final String INT = "int";
+
+    public static final String LONG = "long";
+
+    public static final String FLOAT = "float";
+
+    public static final String DOUBLE = "double";
+
 }

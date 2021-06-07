@@ -28,10 +28,6 @@ import java.util.List;
 @SuppressWarnings("ALL")
 public class ExcelExport {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExcelExport.class);
-    private static final String INT = "int";
-    private static final String LONG = "long";
-    private static final String FLOAT = "float";
-    private static final String DOUBLE = "double";
 
     HttpServletResponse response;
     //文件名
@@ -342,13 +338,13 @@ public class ExcelExport {
         String data = method.invoke(obj) == null ? "" : object.toString();
         Cell cell = dataRow.createCell(columnIndex);
         if (data != null && !"".equals(data)) {
-            if (INT.equals(returnType)) {
+            if (CommonConstants.INT.equals(returnType)) {
                 cell.setCellValue(Integer.parseInt(data));
-            } else if (LONG.equals(returnType)) {
+            } else if (CommonConstants.LONG.equals(returnType)) {
                 cell.setCellValue(Long.parseLong(data));
-            } else if (FLOAT.equals(returnType)) {
+            } else if (CommonConstants.FLOAT.equals(returnType)) {
                 cell.setCellValue(floatDecimalFormat.format(Float.parseFloat(data)));
-            } else if (DOUBLE.equals(returnType)) {
+            } else if (CommonConstants.DOUBLE.equals(returnType)) {
                 cell.setCellValue(doubleDecimalFormat.format(Double.parseDouble(data)));
             } else if (Date.class.getName().equals(returnType)) {
                 cell.setCellValue(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(object));
