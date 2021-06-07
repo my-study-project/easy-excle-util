@@ -1,5 +1,6 @@
 package com.js.poi;
 
+import com.js.constants.CommonConstants;
 import org.apache.poi.hssf.usermodel.HSSFFont;
 import org.apache.poi.hssf.usermodel.HSSFPalette;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -27,9 +28,6 @@ import java.util.List;
 @SuppressWarnings("ALL")
 public class ExcelExport {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExcelExport.class);
-
-    private static final String XLSX = ".xlsx";
-    private static final String XLS = ".xls";
     private static final String INT = "int";
     private static final String LONG = "long";
     private static final String FLOAT = "float";
@@ -153,7 +151,7 @@ public class ExcelExport {
         try {
             //否则，直接写到输出流中
             out = createOutputStream();
-            fileName = fileName + XLS;
+            fileName = fileName + CommonConstants.XLS;
             //写入excel的表头
             Row titleNameRow = workbook.getSheet(sheetName).createRow(0);
             //设置样式

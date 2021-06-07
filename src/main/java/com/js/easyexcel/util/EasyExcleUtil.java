@@ -13,6 +13,7 @@ import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.style.WriteCellStyle;
 import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
 import com.alibaba.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
+import com.js.constants.CommonConstants;
 import com.js.easyexcel.domain.ExcelParams;
 import com.js.easyexcel.domain.ExcelParamsMulti;
 import com.js.easyexcel.domain.FreezePane;
@@ -60,26 +61,6 @@ public class EasyExcleUtil {
         return instance;
     }
 
-    private static final String USER_AGENT = "User-Agent";
-
-    private static final String MSIE = "MSIE";
-
-    private static final String TRIDENT = "Trident";
-
-    private static final String UTF_8 = "UTF-8";
-
-    private static final String ISO_8859_1 = "ISO-8859-1";
-
-    private static final String XLSX = ".xlsx";
-
-    private static final String XLS = ".xls";
-
-    private static final String CONTENT_TYPE = "application/vnd.ms-excel";
-
-    private static final String UTF8 = "utf8";
-
-    private static final String HEAD_CONTENT = "Content-Disposition";
-
     /**
      * @return
      * @Description: 导出文件 适合简单的list类型
@@ -88,15 +69,15 @@ public class EasyExcleUtil {
      * @Date: 2021/5/14 1:49 PM
      */
     public static <T> void exportExcle(HttpServletRequest request, HttpServletResponse response, String filenames, List<T> list, Class clazz) throws Exception {
-        String userAgent = request.getHeader(USER_AGENT);
-        if (userAgent.contains(MSIE) || userAgent.contains(TRIDENT)) {
-            filenames = URLEncoder.encode(filenames, UTF_8);
+        String userAgent = request.getHeader(CommonConstants.USER_AGENT);
+        if (userAgent.contains(CommonConstants.MSIE) || userAgent.contains(CommonConstants.TRIDENT)) {
+            filenames = URLEncoder.encode(filenames, CommonConstants.UTF_8);
         } else {
-            filenames = new String(filenames.getBytes(UTF_8), ISO_8859_1);
+            filenames = new String(filenames.getBytes(CommonConstants.UTF_8), CommonConstants.ISO_8859_1);
         }
-        response.setContentType(CONTENT_TYPE);
-        response.setCharacterEncoding(UTF_8);
-        response.addHeader(HEAD_CONTENT, "filename=" + filenames + XLSX);
+        response.setContentType(CommonConstants.CONTENT_TYPE);
+        response.setCharacterEncoding(CommonConstants.UTF_8);
+        response.addHeader(CommonConstants.HEAD_CONTENT, "filename=" + filenames + CommonConstants.XLSX);
         EasyExcel.write(response.getOutputStream(), clazz).sheet("sheet").doWrite(list);
     }
 
@@ -344,10 +325,10 @@ public class EasyExcleUtil {
     private static OutputStream getOutputStream(String fileName,
                                                 HttpServletResponse response) throws Exception {
         try {
-            fileName = URLEncoder.encode(fileName, UTF_8);
-            response.setContentType(CONTENT_TYPE);
-            response.setCharacterEncoding(UTF8);
-            response.setHeader(HEAD_CONTENT, "attachment; filename=" + fileName + XLSX);
+            fileName = URLEncoder.encode(fileName, CommonConstants.UTF_8);
+            response.setContentType(CommonConstants.CONTENT_TYPE);
+            response.setCharacterEncoding(CommonConstants.UTF8);
+            response.setHeader(CommonConstants.HEAD_CONTENT, "attachment; filename=" + fileName + CommonConstants.XLSX);
             response.setHeader("Pragma", "public");
             response.setHeader("Cache-Control", "no-store");
             response.addHeader("Cache-Control", "max-age=0");
@@ -394,16 +375,16 @@ public class EasyExcleUtil {
      */
     public static <T> void writeExcel(ExcelParams<T> params, HttpServletResponse response) {
 
-        response.setContentType(CONTENT_TYPE);
-        response.setCharacterEncoding(UTF_8);
+        response.setContentType(CommonConstants.CONTENT_TYPE);
+        response.setCharacterEncoding(CommonConstants.UTF_8);
         // 如果fileName为空，则使用当前时间戳为fileName
         String fileName = StringUtils.defaultIfBlank(params.getFileName(), String.valueOf(System.currentTimeMillis()));
         try {
-            fileName = URLEncoder.encode(fileName, UTF_8).replaceAll("\\+", "%20");
+            fileName = URLEncoder.encode(fileName, CommonConstants.UTF_8).replaceAll("\\+", "%20");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-        response.setHeader(HEAD_CONTENT, "attachment;filename*=utf-8''" + fileName + XLSX);
+        response.setHeader(CommonConstants.HEAD_CONTENT, "attachment;filename*=utf-8''" + fileName + CommonConstants.XLSX);
         ExcelWriterSheetBuilder writerSheetBuilder = null;
         ExcelWriter excelWriter = null;
         try {
@@ -627,7 +608,7 @@ public class EasyExcleUtil {
             int idx = fileName.lastIndexOf(".");
             if (idx > 0) {
                 String ext = fileName.substring(fileName.lastIndexOf("."), fileName.length());
-                if (XLS.equals(ext) || XLSX.equals(ext)) {
+                if (CommonConstants.XLS.equals(ext) || CommonConstants.XLSX.equals(ext)) {
                     return true;
                 }
             }
