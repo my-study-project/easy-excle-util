@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -79,6 +80,19 @@ public class EasyExcleUtil {
         response.setCharacterEncoding(CommonConstants.UTF_8);
         response.addHeader(CommonConstants.HEAD_CONTENT, "filename=" + filenames + CommonConstants.XLSX);
         EasyExcel.write(response.getOutputStream(), clazz).sheet("sheet").doWrite(list);
+    }
+
+    /**
+     * @Description: 文件list输出流获取
+     * @Param [request, list, clazz]
+     * @Author: 渡劫 dujie
+     * @Date: 2021/9/23 11:23 下午
+     * @return
+     */
+    public static <T> OutputStream exportExcle(HttpServletRequest request, List<T> list, Class clazz) throws Exception {
+        OutputStream outputStream = new ByteArrayOutputStream();
+        EasyExcel.write(outputStream, clazz).sheet("sheet").doWrite(list);
+        return outputStream;
     }
 
     /**
