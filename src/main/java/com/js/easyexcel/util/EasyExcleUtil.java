@@ -83,19 +83,6 @@ public class EasyExcleUtil {
     }
 
     /**
-     * @Description: 文件list输出流获取
-     * @Param [request, list, clazz]
-     * @Author: 渡劫 dujie
-     * @Date: 2021/9/23 11:23 下午
-     * @return
-     */
-    public static <T> OutputStream exportExcle(HttpServletRequest request, List<T> list, Class clazz) throws Exception {
-        OutputStream outputStream = new ByteArrayOutputStream();
-        EasyExcel.write(outputStream, clazz).sheet("sheet").doWrite(list);
-        return outputStream;
-    }
-
-    /**
      * @return
      * @Description: 导入文件解析 默认分组处理 incoke方法调用的 doSomething方法
      * @Param [multipartFile, clazz, excelListener]
@@ -205,6 +192,36 @@ public class EasyExcleUtil {
                 .excelType(ExcelTypeEnum.XLSX)
                 .sheet(sheetName)
                 .registerWriteHandler(horizontalCellStyleStrategy)
+                .doWrite(data);
+
+    }
+
+    /**
+     * 导出 Excel ：一个 sheet，带表头. 输出流 简单的写入流
+     * @param needCol      需要导出的列
+     * @param outputStream OutputStream
+     * @param data         数据 list，每个元素为一个 BaseRowModel
+     * @param sheetName    导入文件的 sheet 名
+     * @param model        映射实体类，Excel 模型
+     * @throws Exception 异常
+     */
+    public static <T> void writeExcelIn(OutputStream outputStream, List<T> data,Set<String> needCol,
+                                        String sheetName, Class model) throws Exception {
+        // 头的策略
+        WriteCellStyle headWriteCellStyle = new WriteCellStyle();
+        headWriteCellStyle.setHorizontalAlignment(HorizontalAlignment.CENTER);
+        // 内容的策略
+        WriteCellStyle contentWriteCellStyle = new WriteCellStyle();
+        contentWriteCellStyle.setHorizontalAlignment(HorizontalAlignment.CENTER);
+        // 这个策略是 头是头的样式 内容是内容的样式 其他的策略可以自己实现
+        HorizontalCellStyleStrategy horizontalCellStyleStrategy =
+                new HorizontalCellStyleStrategy(headWriteCellStyle, contentWriteCellStyle);
+        // 这里 需要指定写用哪个class去写，然后写到第一个sheet，名字为模板 然后文件流会自动关闭
+        EasyExcel.write(outputStream, model)
+                .excelType(ExcelTypeEnum.XLSX)
+                .sheet(sheetName)
+                .registerWriteHandler(horizontalCellStyleStrategy)
+                .includeColumnFiledNames(needCol)
                 .doWrite(data);
 
     }
