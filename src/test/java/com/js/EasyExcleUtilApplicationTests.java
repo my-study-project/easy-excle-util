@@ -58,7 +58,7 @@ class EasyExcleUtilApplicationTests {
 
     @Test
     void testWrite() throws Exception {
-        String fileName = "D:\\write1.xlsx";
+        String fileName = "/Users/mac/write1.xlsx";
 
         File file = new File(fileName);
         OutputStream os = new FileOutputStream(file);
